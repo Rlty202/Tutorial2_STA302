@@ -1,10 +1,15 @@
 ---
-title: "Analysis of Toronto Bicycle Thefts since 2012"
+title: "STA302 Tutorial 2 - opendatatoronto"
 author: "Ravnit Lotay"
-date: "15 January 2024"
 format: html
-abstract: "This analysis focuses on the Toronto Bicycle Thefts dataset"
 ---
+
+#### Preamble ####
+# Purpose: Analyze the Toronto Bicycle Thefts dataset, focusing on the trend of bicycle thefts in Toronto since 2012. 
+# Author: Ravnit Lotay
+# Email: ravnit.lotay@mail.utoronto.ca
+# Date: 15 January 2024
+# Prerequisites: Familiarity with R and access to the opendatatoronto library.
 
 ```{r}
 # Load the necessary libraries
@@ -14,18 +19,13 @@ library(ggplot2)
 
 resources <- list_package_resources("c7d34d9b-23d2-44fe-8b3b-cd82c8b38978")
 
-# Load "bicycle-thefts - 4326.csv"
-resource_id <- resources$id[resources$name == "bicycle-thefts - 4326.csv"]
+# Load the data and remove any empty values"
+resource_id <- filter(resources, tolower(format) %in% c('csv', 'geojson'))
 data <- get_resource(resource_id)
-
-# Clean the data
-data_clean <- data %>%
-  mutate(OCC_DATE = as.Date(OCC_DATE, format="%Y-%m-%d"),
-         REPORT_DATE = as.Date(REPORT_DATE, format="%Y-%m-%d")) %>%
-  filter(!is.na(OCC_YEAR) & !is.na(OCC_MONTH) & !is.na(DIVISION))
+data <- na.omit(data)
 
 # Filter the data to years including and after 2012
-data_filtered <- data_clean %>%
+data_filtered <- data %>%
   filter(OCC_YEAR >= 2012)
 
 # Get the number of thefts per year
@@ -33,8 +33,10 @@ thefts_by_year <- data_filtered  %>%
   group_by(OCC_YEAR) %>%
   summarize(Count = n())
 
+# Create the bar chart and add additional x-axis values
 bar_chart <- ggplot(thefts_by_year, aes(x = OCC_YEAR, y = Count)) +
   geom_bar(stat = "identity", fill = "blue") +
+  scale_x_continuous(breaks = seq(min(thefts_by_year$OCC_YEAR), max(thefts_by_year$OCC_YEAR), by = 1)) +
   labs(title = "Bicycle Thefts in Toronto by Year (2012 and onward)",
        x = "Year",
        y = "Number of Thefts") +
